@@ -10,19 +10,16 @@ from rest_framework import serializers
 from DjangoEmumbaTrainingApplication.models import OurUser, Task
 
 class OurUserSerializer(serializers.ModelSerializer):
+    # Very important for securely handling passwords in Django REST Framework serializers.
+    # This makes the field write-only, which means:
+    #   You can send this field in a POST/PUT request (e.g. during registration or password change)
+    #   It will NOT be included in the response/output (e.g. when you serialize a user)
+    #   This will prevent the password from being exposed
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = OurUser
-        fields = [
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'account_date_creation',
-            'password',
-        ]
+        fields = ['username', 'email', 'password', 'first_name', 'last_name', 'account_date_creation']
 
     def create(self, validated_data):
         user = OurUser.objects.create_user(

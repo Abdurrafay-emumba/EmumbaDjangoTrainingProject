@@ -30,8 +30,19 @@ ALLOWED_HOSTS = []
 # Telling our project that use this as the default user
 AUTH_USER_MODEL = 'DjangoEmumbaTrainingApplication.OurUser'
 
-# Application definition
+# Manually added, this is required for the authentication and login to work
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',  # for browser logins
+        'rest_framework.authentication.BasicAuthentication',  # optional
+        'rest_framework.authentication.TokenAuthentication',  # for token-based login
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', # This makes every API endpoint require authentication by default, unless you explicitly override it with @permission_classes([AllowAny]).
+    ]
+}
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

@@ -1,5 +1,7 @@
 # IN this class we will write our APIs
 import csv
+
+from django.contrib.auth import authenticate, login
 from django.utils import timezone
 from datetime import date
 
@@ -7,9 +9,11 @@ from django.db.models import Q, F
 # Importing libraries
 from django.shortcuts import render # This is a auto-included library
 from django.views.decorators.csrf import csrf_exempt # To allow other domains to access our api method
-from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import JSONParser # to parse the incoming data into data model
 from django.http.response import JsonResponse, HttpResponse
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
 # importing our models
@@ -25,37 +29,93 @@ from reportlab.pdfgen import canvas
 from django.db.models import Count
 from django.db.models.functions import TruncDate, ExtractWeekDay
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+    """
+    Function Definition: API endpoint to register a new user.
+    We can no longer just INSERT data to the database, as the passwords will be hashed and stored in it
+    BY adding users this way, the password will be hashed by django
 
-# Create your views here.
+    TODO :: Much can be improved here. For example:
+        1) Same email cannot be used for registration again
+        2) Verifying the email etc
+    """
+    # Our Serializer
+    serializer = OurUserSerializer(data=request.data)
 
-@csrf_exempt
-def UserApi(request, id=0):
-    # If the request is of type GET, then return all of the users
-    if(request.method == 'GET'):
+    # If the received data seems valid, then ok register the user
+    # Other wise don't
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
 
-        # This objects is not being recognized as it is a field that will be dynamically created on run time
-        users = OurUser.objects.all()
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # This will give us a list, not a dict
-        user_serializer = OurUserSerializer(users, many=True)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_user(request):
+    """
+    Function Description: Our Users will login using this function.
+    Other report functions will require the user being logged in
+    :param request:
+    :return:
+    """
+    username = request.data.get('username')
+    password = request.data.get('password')
 
-        # Now we will convert it to JSON format
-        # safe = True means that we are sure the input is dict and it can be converted to json
-        # safe = False means that we are not sure if the input is dict
-        return JsonResponse(user_serializer.data, safe=False)
+    if not username or not password:
+        return Response({"error": "Username and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
+    user = authenticate(username=username, password=password) # This line checks the user's credentials
+
+    if user is not None:
+        login(request, user)  # This is the line that logs the user in (for sessions)
+        return Response({"message": "Login successful!", "username": user.username})
+    else:
+        return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['GET'])
+def get_users(request):
+    """
+    Function Definition: This function is for testing purpose only. It will get us all the users that are registered
+    :param request:
+    :return: All the users in a dict/json format
+    """
+
+    users = OurUser.objects.all()
+
+    # This will give us a list, not a dict
+    user_serializer = OurUserSerializer(users, many=True)
+
+    # @api_view(['GET'])  # Required to make Response work properly
+    # Response is more flexible than JsonReposne
+    # Usage:
+    #   return Response({'message': 'success'})                     # Can return a dict
+    #   return Response([1, 2, 3])                                  # Can return a list
+    #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
+    #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
+    return Response(user_serializer.data)
+
+
+# Since for the report functions, we are requiring the user to be looged in
+# So, we no longer require the user_id, instead we will take the user_id of the logged in user
+# We dont really require @permission_classes([IsAuthenticated]) as we have already implemented in settings.py that every api needs -
+# - authentication
 
 @api_view(['GET'])  # Required to make Response work properly
-def SimilarTask(request, user_id):
+@permission_classes([IsAuthenticated])
+def SimilarTask(request):
     """
     Function Description: This function will get all task of the user. And will check one-by-one -
     - If the description of task A is present in task B or vice versa, return true. Other wise false
 
-    :param request, user_id is the id of the current logged in user
+    :param request, user_id is the id of the current logged in user (user_id removed after implementing authentication)
     :Assumption: We will not check which request type it is, since this function will only do one thing
     :return: return a json or list
     """
 
+    user_id = request.user.id
     tasks = Task.objects.filter(user_id= user_id)
 
     resultant_task = []
@@ -87,12 +147,14 @@ def SimilarTask(request, user_id):
 
 # TODO :: Implement a landing page sort of for these download report functions
 @api_view(['GET'])
-def get_task_status_report(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_task_status_report(request):
     """
     TFunction definition: This function will generate a report for us that will -
     - Count of total tasks, completed tasks, and remaining tasks
     :return:
     """
+    user_id = request.user.id
 
     tasks = Task.objects.filter(user_id=user_id)
 
@@ -118,7 +180,8 @@ def get_task_status_report(request, user_id):
 
 # Average number of tasks completed per day since creation of account
 @api_view(['GET'])
-def get_average_task_per_day(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_average_task_per_day(request):
     """
     Function Definition: This function will give us the average number of task completed per day
     Logic: To keep it optimized, we will use this formula:
@@ -128,6 +191,8 @@ def get_average_task_per_day(request, user_id):
     :return: Not a csv or pdf report, but rather a json/dict
     """
     try:
+        user_id = request.user.id
+
         # Getting the user so that we can have the account creation date
         # The reason the below mentioned line did not work is because filter returns a queryset of zero or more objects -
         # - while I was expecting and using it like a object, when in fact it is like a list (queryset to be exact)
@@ -172,13 +237,14 @@ def get_average_task_per_day(request, user_id):
         return Response(response_dict)
 
 @api_view(['GET'])
-def get_late_task_report(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_late_task_report(request):
     """
     Function definition: This function will generate a report for us that will -
     - Count total number of task that were delayed
     :return: pdf
     """
-
+    user_id = request.user.id
     today = timezone.now().date()
 
     tasks = Task.objects.filter(user_id=user_id)
@@ -207,7 +273,8 @@ def get_late_task_report(request, user_id):
 
 # Since time of account creation, on what date, maximum number of tasks were completed in a single day
 @api_view(['GET'])
-def get_day_on_which_max_number_of_task_completed(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_day_on_which_max_number_of_task_completed(request):
     """
     Function definition: In this function we will get the day on which the most task were completed
     Logic 1: We can try each day, from the account creation date and count the number of completed task in each day. But this is too brute force.
@@ -219,6 +286,8 @@ def get_day_on_which_max_number_of_task_completed(request, user_id):
     """
 
     try:
+        user_id = request.user.id
+
         # Some explanation
         #
         # .values('field'): Tells Django to group by 'field'
@@ -271,7 +340,8 @@ def get_day_on_which_max_number_of_task_completed(request, user_id):
 
 # Since time of account creation, how many tasks are opened on every day of the week (mon, tue, wed, ....)
 @api_view(['GET'])
-def get_number_of_task_opened_every_day(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_number_of_task_opened_every_day(request):
     """
     Function Definition: This will get us all the task that were opened on each day of the week
     Logic: I would have to annotate days in the data table. Then I would have to Group by (.values()) on a day. -
@@ -283,6 +353,8 @@ def get_number_of_task_opened_every_day(request, user_id):
     """
 
     try:
+        user_id = request.user.id
+
         result = (
                 Task.objects
                 .filter(
