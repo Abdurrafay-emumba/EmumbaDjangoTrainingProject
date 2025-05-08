@@ -1,11 +1,19 @@
 from django.db import models
 from datetime import date
 
+# I will make my self-made user class inherit from this class, so that it gets all the perks, for example (login, authenticate etc)
+from django.contrib.auth.models import AbstractUser
+
 # Create your models here.
-class User(models.Model):
+
+# Our self made user class is now inheriting from django in-built user class.
+# Our user class will get the in-built perks of login etc
+# And since, it is our self made user class, we can make changes as we want in it
+class OurUser(AbstractUser):
+    # id and name are no longer needed as now these fields will be inherited from the parent class
     # This is the primary key for the user, and will act as the foreign key in task table
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
+    # id = models.AutoField(primary_key=True)
+    # name = models.CharField(max_length=100)
 
     account_date_creation = models.DateField(default=date(2025,1,1))
 
@@ -29,7 +37,7 @@ class Task(models.Model):
 
     # This is our foreign key, here we specified that the table is User,
     # It will auto take the primary key as the foreign key
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(OurUser, on_delete=models.CASCADE)
 
 
 

@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Telling our project that use this as the default user
+AUTH_USER_MODEL = 'DjangoEmumbaTrainingApplication.OurUser'
 
 # Application definition
 

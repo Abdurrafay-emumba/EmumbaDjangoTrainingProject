@@ -13,11 +13,11 @@ from django.http.response import JsonResponse, HttpResponse
 from rest_framework.response import Response # More flexible than JsonResponse
 
 # importing our models
-from DjangoEmumbaTrainingApplication.models import User
+from DjangoEmumbaTrainingApplication.models import OurUser
 from DjangoEmumbaTrainingApplication.models import Task
 
 # Importing their serializers
-from DjangoEmumbaTrainingApplication.serializers import UserSerializer
+from DjangoEmumbaTrainingApplication.serializers import OurUserSerializer
 from DjangoEmumbaTrainingApplication.serializers import TaskSerializer
 
 from reportlab.pdfgen import canvas
@@ -34,10 +34,10 @@ def UserApi(request, id=0):
     if(request.method == 'GET'):
 
         # This objects is not being recognized as it is a field that will be dynamically created on run time
-        users = User.objects.all()
+        users = OurUser.objects.all()
 
         # This will give us a list, not a dict
-        user_serializer = UserSerializer(users, many=True)
+        user_serializer = OurUserSerializer(users, many=True)
 
         # Now we will convert it to JSON format
         # safe = True means that we are sure the input is dict and it can be converted to json
@@ -133,7 +133,7 @@ def get_average_task_per_day(request, user_id):
         # - while I was expecting and using it like a object, when in fact it is like a list (queryset to be exact)
         # user = User.objects.filter(id=user_id) # This is the line that did not work
         # Replacing it with get(), which is like filter, but will give us only 1 object
-        user = User.objects.get(id=user_id)
+        user = OurUser.objects.get(id=user_id)
 
         # Getting all the task of a person having the desired user_id
         tasks = Task.objects.filter(user_id=user_id)

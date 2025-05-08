@@ -7,16 +7,37 @@
 # - which can then be easily rendered into JSON, XML, or other content types — and vice versa.
 
 from rest_framework import serializers
-from DjangoEmumbaTrainingApplication.models import User, Task
+from DjangoEmumbaTrainingApplication.models import OurUser, Task
 
-class UserSerializer(serializers.ModelSerializer):
+class OurUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
-        model = User
-        fields = ['id', 'name', 'account_date_creation']
+        model = OurUser
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'account_date_creation',
+            'password',
+        ]
+
+    def create(self, validated_data):
+        user = OurUser.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            account_date_creation=validated_data.get('account_date_creation')
+        )
+        return user
 
 class TaskSerializer(serializers.ModelSerializer):
     # This will show the user's ID by default.
-    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    user_id = serializers.PrimaryKeyRelatedField(queryset=OurUser.objects.all())
 
     class Meta:
         model = Task
