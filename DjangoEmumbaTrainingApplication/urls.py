@@ -9,7 +9,10 @@ urlpatterns = [
     path('login/', views.login_user, name='login_user'),
     path('get_users/', views.get_users, name='get_users'),
 
-    path('user/tasks/', views.SimilarTask, name='similar_tasks'),
+    path('user/tasks/create_task', views.create_task, name='create_task'),
+    path('user/tasks/getAllTask', views.getAllTask, name='getAllTask'),
+    path('user/tasks/SimilarTask', views.SimilarTask, name='similar_tasks'),
+
     path('user/Report1/', views.get_task_status_report, name='Report 1'),
     path('user/Report2/', views.get_average_task_per_day, name='Report 2'),
     path('user/Report3/', views.get_late_task_report, name='Report 3'),

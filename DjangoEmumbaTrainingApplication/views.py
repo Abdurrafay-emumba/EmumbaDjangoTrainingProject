@@ -82,6 +82,7 @@ def login_user(request):
         return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_users(request):
     """
     Function Definition: This function is for testing purpose only. It will get us all the users that are registered
@@ -104,7 +105,67 @@ def get_users(request):
     return Response(user_serializer.data)
 
 
-# Since for the report functions, we are requiring the user to be looged in
+# Task Functions
+# 1) Create
+# 2) Edit
+# 3) Delete
+# 4) Get all task
+
+# TODO :: Make the creation date for both (the task and user account) to be the current date.
+# TODO :: Don't let the task specify its own user_id. Make it so that the id of the logged in person is used.
+# TODO :: Don't let the task specify its own id. Let Django handle it.
+# TODO :: Put checks on task due date, completion date etc, so that they are not before the creation date
+# TODO :: When the user marks the task as complete, only then update it's completion date and set it to today's date
+
+# TODO :: May have to define different serializers for data input and data output
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_task(request):
+    """
+    Function Definition: This function will receive a task data from the user and it will create that task
+    :param request:
+    :return: an OK response or a bad response
+    """
+    # Our Serializer
+    serializer = TaskSerializer(data=request.data)
+
+    # If the received data seems valid, then ok add the task
+    # Otherwise don't
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'Task created successfully'}, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getAllTask(request):
+    """
+    Function Definition: This function requires being logged in.
+    It will get all the task of the user for us
+
+    :param request:
+    :return: All the user task
+    """
+
+    # Getting the user id of the logged in person
+    user_id = request.user.id
+    # Getting the task of the person
+    tasks = Task.objects.filter(user_id= user_id)
+
+    # @api_view(['GET'])  # Required to make Response work properly
+    # Response is more flexible than JsonReposne
+    # Usage:
+    #   return Response({'message': 'success'})                     # Can return a dict
+    #   return Response([1, 2, 3])                                  # Can return a list
+    #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
+    #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
+    return Response(TaskSerializer(tasks, many=True).data)
+
+
+
+# Since for the report functions, we are requiring the user to be logged in
 # So, we no longer require the user_id, instead we will take the user_id of the logged in user
 # We dont really require @permission_classes([IsAuthenticated]) as we have already implemented in settings.py that every api needs -
 # - authentication
