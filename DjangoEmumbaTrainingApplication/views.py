@@ -16,6 +16,7 @@ from django.http.response import JsonResponse, HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
+from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate
 # importing our models
 from DjangoEmumbaTrainingApplication.models import OurUser
 from DjangoEmumbaTrainingApplication.models import Task
@@ -38,7 +39,7 @@ def register_user(request):
     BY adding users this way, the password will be hashed by django
 
     TODO :: Much can be improved here. For example:
-        1) Same email cannot be used for registration again
+        1) Same email cannot be used for registration again :: DONE :: Made email unique+NON_NULL+NON_EMPTY in OurUser model
         2) Verifying the email etc
     """
     # Our Serializer
@@ -61,13 +62,18 @@ def login_user(request):
     :param request:
     :return:
     """
-    username = request.data.get('username')
+    userNameOrEmail = request.data.get('username')
     password = request.data.get('password')
 
-    if not username or not password:
-        return Response({"error": "Username and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+    if not userNameOrEmail or not password:
+        return Response({"error": "Username (or Email) and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = authenticate(username=username, password=password) # This line checks the user's credentials
+    # This line checks the user's credentials, it checks username and password
+    # But this in-built function only works for username + password
+    # user = authenticate(username=username, password=password)
+
+    # This is our custom authenticator, it will work for (username+password) or (email+password)
+    user = Custom_Authenticate(userNameOrEmail, password)
 
     if user is not None:
         login(request, user)  # This is the line that logs the user in (for sessions)

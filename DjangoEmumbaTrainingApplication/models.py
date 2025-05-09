@@ -15,6 +15,9 @@ class OurUser(AbstractUser):
     # id = models.AutoField(primary_key=True)
     # name = models.CharField(max_length=100)
 
+    # Making email unique, as our logic (authentication) depends on it being unique, would also have had made username unqiue, but it already is so
+    email = models.EmailField(unique=True,null=False,blank=False)
+
     account_date_creation = models.DateField(default=date(2025,1,1))
 
 class Task(models.Model):
