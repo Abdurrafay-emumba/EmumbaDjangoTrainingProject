@@ -1,7 +1,7 @@
 # IN this class we will write our APIs
 import csv
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
 from datetime import date
 
@@ -81,6 +81,17 @@ def login_user(request):
         return Response({"message": "Login successful!", "username": user.username})
     else:
         return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_user(request):
+    """
+    Function Definition: This function will logout your user. Will only work with session authentication -
+    - Which we are using
+    """
+    str_user_id = str(request.user.id)
+    logout(request)  # Clears the session
+    return Response({"message": "Logout successful. User id: " + str_user_id }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

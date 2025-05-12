@@ -7,6 +7,7 @@ from django.urls import re_path, path
 urlpatterns = [
     path('register/', views.register_user, name='register_user'),
     path('login/', views.login_user, name='login_user'),
+    path('logout/', views.logout_user, name='logout_user'),
     path('get_users/', views.get_users, name='get_users'),
 
     path('user/tasks/create_task/', views.create_task, name='create_task'),
