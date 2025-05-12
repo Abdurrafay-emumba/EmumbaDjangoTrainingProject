@@ -175,6 +175,26 @@ def mark_task_complete(request):
         return Response({"message": "Task marked as complete"})
     return Response(serializer.errors, status=400)
 
+# We can use POST here, but that would voilate standards and it may cause confusion and UI incomptatability
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_task(request, task_id):
+    """
+    Function definition: This API will be used to delete a task., we have to send the data by url.
+    DELETE does not carry data like POST.
+    This function will not need a serializer
+    :param request:
+    :return:
+    """
+    try:
+        # To specify the task and user
+        task = Task.objects.get(id=task_id, user_id=request.user)
+        # This is enough to delete the object
+        task.delete()
+        return Response({"message": "Task deleted successfully."}, status=status.HTTP_200_OK)
+    except Task.DoesNotExist:
+        return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getAllTask(request):
