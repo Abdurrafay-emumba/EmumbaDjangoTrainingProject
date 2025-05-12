@@ -22,7 +22,8 @@ from DjangoEmumbaTrainingApplication.models import OurUser
 from DjangoEmumbaTrainingApplication.models import Task
 
 # Importing their serializers
-from DjangoEmumbaTrainingApplication.serializers import OurUserSerializer
+from DjangoEmumbaTrainingApplication.serializers import OurUserSerializer, TaskDetailSerializer, \
+    OurUserDetailSerializer, TaskCompletionUpdationSerializer
 from DjangoEmumbaTrainingApplication.serializers import TaskSerializer
 
 from reportlab.pdfgen import canvas
@@ -93,7 +94,7 @@ def get_users(request):
     users = OurUser.objects.all()
 
     # This will give us a list, not a dict
-    user_serializer = OurUserSerializer(users, many=True)
+    user_serializer = OurUserDetailSerializer(users, many=True)
 
     # @api_view(['GET'])  # Required to make Response work properly
     # Response is more flexible than JsonReposne
@@ -111,13 +112,13 @@ def get_users(request):
 # 3) Delete
 # 4) Get all task
 
-# TODO :: Make the creation date for both (the task and user account) to be the current date.
-# TODO :: Don't let the task specify its own user_id. Make it so that the id of the logged in person is used.
-# TODO :: Don't let the task specify its own id. Let Django handle it.
+# TODO_DONE :: Make the creation date for both (the task and user account) to be the current date.
+# TODO_DONE :: Don't let the task specify its own user_id. Make it so that the id of the logged in person is used.
+# TODO_DONE :: Don't let the task specify its own id. Let Django handle it.
 # TODO :: Put checks on task due date, completion date etc, so that they are not before the creation date
-# TODO :: When the user marks the task as complete, only then update it's completion date and set it to today's date
+# TODO_DONE :: When the user marks the task as complete, only then update it's completion date and set it to today's date
 
-# TODO :: May have to define different serializers for data input and data output
+# TODO_DONE :: May have to define different serializers for data input and data output
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -127,8 +128,9 @@ def create_task(request):
     :param request:
     :return: an OK response or a bad response
     """
-    # Our Serializer
-    serializer = TaskSerializer(data=request.data)
+
+    # Our Serializer, providing it with more context.
+    serializer = TaskSerializer(data=request.data, context={'request': request})
 
     # If the received data seems valid, then ok add the task
     # Otherwise don't
@@ -137,6 +139,30 @@ def create_task(request):
         return Response({'message': 'Task created successfully'}, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# We could have used PUT here, but PATCH is more resource light, and should be used when updating some values -
+# - like in our case
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def mark_task_complete(request):
+    try:
+        task_id = request.data.get('id')
+        # Making sure to get the task of the user with the desired id
+        task = Task.objects.get(id=task_id, user_id=request.user)
+    except Task.DoesNotExist:
+        return Response({"error": "Task not found"}, status=404)
+
+    # So, in this line, we are:
+    #   Telling the serialzier to update our object 'task'
+    #   Since our serilizer does not require any data, we are passing it empty data, otherwise we would have done response.data
+    #   partial =True, means we want to update
+    serializer = TaskCompletionUpdationSerializer(task, data={}, partial=True)
+
+    if serializer.is_valid():
+        # This serializer.save() is calling the update function we had overidden in our serializer
+        serializer.save()
+        return Response({"message": "Task marked as complete"})
+    return Response(serializer.errors, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -161,7 +187,7 @@ def getAllTask(request):
     #   return Response([1, 2, 3])                                  # Can return a list
     #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
     #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-    return Response(TaskSerializer(tasks, many=True).data)
+    return Response(TaskDetailSerializer(tasks, many=True).data)
 
 
 
@@ -197,8 +223,8 @@ def SimilarTask(request):
 
         for filtered_task in filtered_tasks:
             resultant_task.append({
-                'task_1': TaskSerializer(task).data,
-                'task_2': TaskSerializer(filtered_task).data
+                'task_1': TaskDetailSerializer(task).data,
+                'task_2': TaskDetailSerializer(filtered_task).data
             })
 
     # @api_view(['GET'])  # Required to make Response work properly
