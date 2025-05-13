@@ -3,6 +3,8 @@ File Purpose: This is a self-made file. The purpose of this file to keep the cod
 The logic in the views.py file is getting to big. So, it would be a good idea to add supporting functions here.
 """
 from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 from DjangoEmumbaTrainingApplication.models import OurUser
 
@@ -35,4 +37,44 @@ def Custom_Authenticate(userNameOrEmail, password):
     else:
         return None
 
+
+def paginate_queryset(queryset, request, serializer_class=None):
+    """
+    Function Description: This function will paginate the data for us. It is useful for paginating multiple views
+
+    :param queryset: The data to paginate (It must be a Django queryset or a list. Dict is NOT accepted).
+    :param request: The request object (needed for pagination metadata like ?page=2).
+    :param serializer_class: If provided, the data will be serialized using this class.
+                             If None, assume data is already serialized or ready to return.
+                             The default value is None, so if no parameter is passes to it, it will assume that the data is already -
+                             - serialized
+    :return: A paginated Response object.
+    """
+
+    # For query pagination
+    paginator = PageNumberPagination()
+
+    # This below line is redundant, since we have already mentioned page size in settings.py
+    # paginator.page_size = 10
+    page = paginator.paginate_queryset(queryset, request)
+
+    if page is None:
+        # In case pagination isn't applied (e.g., invalid page number)
+        return Response([])
+
+    if serializer_class is not None:
+        serializer = serializer_class(page, many=True)
+
+        # @api_view(['GET'])  # Required to make Response work properly
+        # Response is more flexible than JsonReposne
+        # Usage:
+        #   return Response({'message': 'success'})                     # Can return a dict
+        #   return Response([1, 2, 3])                                  # Can return a list
+        #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
+        #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
+        # This is using Response under the hood
+        return paginator.get_paginated_response(serializer.data)
+    else:
+        # Assume data is already serialized (e.g., a list of dicts)
+        return paginator.get_paginated_response(page)
 

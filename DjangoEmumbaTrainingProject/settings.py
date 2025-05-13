@@ -32,11 +32,17 @@ AUTH_USER_MODEL = 'DjangoEmumbaTrainingApplication.OurUser'
 
 # Manually added, this is required for the authentication and login to work
 REST_FRAMEWORK = {
+
+    # This is for API pagination
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',  # for browser logins
         'rest_framework.authentication.BasicAuthentication',  # optional
         'rest_framework.authentication.TokenAuthentication',  # for token-based login
     ],
+
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated', # This makes every API endpoint require authentication by default, unless you explicitly override it with @permission_classes([AllowAny]).
     ]

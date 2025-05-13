@@ -11,12 +11,13 @@ from django.shortcuts import render # This is a auto-included library
 from django.views.decorators.csrf import csrf_exempt # To allow other domains to access our api method
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser # to parse the incoming data into data model
 from django.http.response import JsonResponse, HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
-from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate
+from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate, paginate_queryset
 # importing our models
 from DjangoEmumbaTrainingApplication.models import OurUser
 from DjangoEmumbaTrainingApplication.models import Task
@@ -93,28 +94,22 @@ def logout_user(request):
     logout(request)  # Clears the session
     return Response({"message": "Logout successful. User id: " + str_user_id }, status=status.HTTP_200_OK)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_users(request):
     """
-    Function Definition: This function is for testing purpose only. It will get us all the users that are registered
+    Function Definition: This function is for testing purpose only. It will get us all the users that are registered.
+    UPDATE: This API was not paginated. Paginating the APIs.
     :param request:
     :return: All the users in a dict/json format
     """
 
+    # Our Query dataset
     users = OurUser.objects.all()
 
-    # This will give us a list, not a dict
-    user_serializer = OurUserDetailSerializer(users, many=True)
-
-    # @api_view(['GET'])  # Required to make Response work properly
-    # Response is more flexible than JsonReposne
-    # Usage:
-    #   return Response({'message': 'success'})                     # Can return a dict
-    #   return Response([1, 2, 3])                                  # Can return a list
-    #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
-    #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-    return Response(user_serializer.data)
+    # Paginating the query
+    return paginate_queryset(users, request, OurUserDetailSerializer)
 
 
 # Task Functions
@@ -202,6 +197,7 @@ def getAllTask(request):
     Function Definition: This function requires being logged in.
     It will get all the task of the user for us
 
+    UPDATE: This API was not paginated. Paginating the API
     :param request:
     :return: All the user task
     """
@@ -211,15 +207,8 @@ def getAllTask(request):
     # Getting the task of the person
     tasks = Task.objects.filter(user_id= user_id)
 
-    # @api_view(['GET'])  # Required to make Response work properly
-    # Response is more flexible than JsonReposne
-    # Usage:
-    #   return Response({'message': 'success'})                     # Can return a dict
-    #   return Response([1, 2, 3])                                  # Can return a list
-    #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
-    #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-    return Response(TaskDetailSerializer(tasks, many=True).data)
-
+    # Function called for pagination
+    return paginate_queryset(tasks, request, TaskDetailSerializer)
 
 
 # Since for the report functions, we are requiring the user to be logged in
@@ -233,6 +222,8 @@ def SimilarTask(request):
     """
     Function Description: This function will get all task of the user. And will check one-by-one -
     - If the description of task A is present in task B or vice versa, return true. Other wise false
+
+    UPDATE: This API was not paginated. Paginating the API.
 
     :param request, user_id is the id of the current logged in user (user_id removed after implementing authentication)
     :Assumption: We will not check which request type it is, since this function will only do one thing
@@ -258,14 +249,8 @@ def SimilarTask(request):
                 'task_2': TaskDetailSerializer(filtered_task).data
             })
 
-    # @api_view(['GET'])  # Required to make Response work properly
-    # Response is more flexible than JsonReposne
-    # Usage:
-    #   return Response({'message': 'success'})                     # Can return a dict
-    #   return Response([1, 2, 3])                                  # Can return a list
-    #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
-    #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-    return Response(resultant_task)
+    # Since the serializer class was not passed, it will assume that the data is already serialized (in the form of dict or list)
+    return paginate_queryset(resultant_task, request)
 
 # Reports start from here
 
@@ -276,7 +261,10 @@ def get_task_status_report(request):
     """
     TFunction definition: This function will generate a report for us that will -
     - Count of total tasks, completed tasks, and remaining tasks
-    :return:
+
+    UPDATE: This API was not paginated. I would have paginated it, but it is returning a csv so we will leave it as it is.
+
+    :return: csv file
     """
     user_id = request.user.id
 
@@ -310,6 +298,10 @@ def get_average_task_per_day(request):
     Function Definition: This function will give us the average number of task completed per day
     Logic: To keep it optimized, we will use this formula:
             (number of completed task)/(total number of days till today since joining)
+
+    Update: THis API is not paginated. And will not be paginated. As it is returning a single dict.
+            Also dict are not paginable objects
+
     :param request:
     :param user_id:
     :return: Not a csv or pdf report, but rather a json/dict
@@ -338,6 +330,7 @@ def get_average_task_per_day(request):
         response_dict['User ID'] = user_id
         response_dict["Average task completed per day"] = count_of_average_task_completed_per_day
 
+        # @api_view(['GET'])  # Required to make Response work properly
         # Response is more flexible than JsonReposne
         # Usage:
         #   return Response({'message': 'success'})                     # Can return a dict
@@ -366,7 +359,10 @@ def get_late_task_report(request):
     """
     Function definition: This function will generate a report for us that will -
     - Count total number of task that were delayed
-    :return: pdf
+
+    UPDATE: This API was not paginated. I would have paginated it, but it is returning a pdf so we will leave it as it is.
+
+    :return: pdf file
     """
     user_id = request.user.id
     today = timezone.now().date()
@@ -403,6 +399,9 @@ def get_day_on_which_max_number_of_task_completed(request):
     Function definition: In this function we will get the day on which the most task were completed
     Logic 1: We can try each day, from the account creation date and count the number of completed task in each day. But this is too brute force.
     Logic 2: Try to somehow group by date and count the entries. It's a little tricky in django, but adding comments for clarifications
+
+    Update: THis API is not paginated. And will not be paginated. As it is returning a single dict.
+        Also dict are not paginable objects
 
     :param request:
     :param user_id:
@@ -470,6 +469,9 @@ def get_number_of_task_opened_every_day(request):
     Function Definition: This will get us all the task that were opened on each day of the week
     Logic: I would have to annotate days in the data table. Then I would have to Group by (.values()) on a day. -
      - Then I will again use annotate to put an aggregation function on the days (count them)
+
+    Update: THis API is not paginated. And will not be paginated. As it is returning a single dict.
+        Also dict are not paginable objects
 
     :param request:
     :param user_id:
