@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,11 +21,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=hx!fxi%9c#8b&5%4$$e8s--@kzfaj29*q)c0my$h0+z6hz4ry'
+# Self added code for getting secrets from .env file. Initialize environment variables
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
 
+
+# reading .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# Now use environment variables like this:
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# This key is used for cryptographic signing. So, very imp in short
+# If leaked: An attacker could forge session data, CSRF tokens, and reset tokens — leading to account takeovers or remote access.
+# New secret key can be obtained by the following command:
+#   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+SECRET_KEY = env('SECRET_KEY')
+
 
 ALLOWED_HOSTS = []
 
@@ -104,11 +122,11 @@ WSGI_APPLICATION = 'DjangoEmumbaTrainingProject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'UserTaskDataBase', # Your DataBase name
-        'USER': 'postgres', # Your DataBase User
-        'PASSWORD': 'admin', # Your DataBase password
-        'HOST' : 'localhost', # IP or link where your DataBase is hosted
-        'PORT': '5432', # Port where the postgres is running
+        'NAME': env('DB_NAME'), # Your DataBase name
+        'USER': env('DB_USER'), # Your DataBase User
+        'PASSWORD': env('DB_PASSWORD'), # Your DataBase password
+        'HOST': env('DB_HOST'), # IP or link where your DataBase is hosted
+        'PORT': env('DB_PORT'), # Port where the postgres is running
     }
 }
 
