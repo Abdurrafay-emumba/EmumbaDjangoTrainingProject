@@ -16,9 +16,14 @@ class OurUser(AbstractUser):
     # name = models.CharField(max_length=100)
 
     # Making email unique, as our logic (authentication) depends on it being unique, would also have had made username unqiue, but it already is so
+    # The models.EmailField already checks the format at the model/form level.
     email = models.EmailField(unique=True,null=False,blank=False)
 
     account_date_creation = models.DateField(default=date(2025,1,1))
+
+    # Users will by default will not be email verified
+    # This field will turn to true after users have verified email
+    is_email_verified = models.BooleanField(default=False)
 
 class Task(models.Model):
     # This will be the primary key for the Task table

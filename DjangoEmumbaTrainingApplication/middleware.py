@@ -2,7 +2,12 @@
 File Purpose: This is a self-made file. The purpose of this file to keep the code clean, maintainable and readable.
 The logic in the views.py file is getting to big. So, it would be a good idea to add supporting functions here.
 """
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.db.models import Q
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.urls import reverse
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -77,4 +82,30 @@ def paginate_queryset(queryset, request, serializer_class=None):
     else:
         # Assume data is already serialized (e.g., a list of dicts)
         return paginator.get_paginated_response(page)
+
+
+def send_verification_email(user, request):
+    """
+    Function Definition: This function will send the verification email for us.
+    It will use the credentials that we specified in the settings.py
+
+    This function should be called after the user has registered successfully
+    :param user:
+    :param request:
+    :return:
+    """
+
+    # This is django default token creation function
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    verification_link = request.build_absolute_uri(
+        reverse('verify_email', kwargs={'uidb64': uid, 'token': token})
+    )
+
+    subject = 'Verify your email'
+    message = f'Hi {user.username},\nPlease verify your email by clicking the link below:\n{verification_link}'
+
+    # This is django default email sending function. It is sending the email
+    send_mail(subject, message, 'noreply@example.com', [user.email])
 

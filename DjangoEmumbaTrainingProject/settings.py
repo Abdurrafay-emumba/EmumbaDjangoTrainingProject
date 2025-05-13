@@ -48,6 +48,17 @@ ALLOWED_HOSTS = []
 # Telling our project that use this as the default user
 AUTH_USER_MODEL = 'DjangoEmumbaTrainingApplication.OurUser'
 
+
+# Email Configurations
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+# Our email credentials
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = 'Abdurrafay <abdur.rafay@emumba.com>'
+
 # Manually added, this is required for the authentication and login to work
 REST_FRAMEWORK = {
 

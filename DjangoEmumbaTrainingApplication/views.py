@@ -2,12 +2,15 @@
 import csv
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.tokens import default_token_generator
 from django.utils import timezone
 from datetime import date
 
+from django.contrib import messages
 from django.db.models import Q, F
 # Importing libraries
-from django.shortcuts import render # This is a auto-included library
+from django.shortcuts import render, redirect  # This is a auto-included library
+from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import csrf_exempt # To allow other domains to access our api method
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -17,7 +20,7 @@ from django.http.response import JsonResponse, HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
-from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate, paginate_queryset
+from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate, paginate_queryset, send_verification_email
 # importing our models
 from DjangoEmumbaTrainingApplication.models import OurUser
 from DjangoEmumbaTrainingApplication.models import Task
@@ -50,10 +53,35 @@ def register_user(request):
     # If the received data seems valid, then ok register the user
     # Other wise don't
     if serializer.is_valid():
-        serializer.save()
+        # This actually saves and returns the instance to you, so we dont need the below line
+        user = serializer.save()
+        # Sending the user email so they may confirm their email
+        # Since the user has been saved, he can be looked up (no longer needed/redundant)
+        # user = OurUser.objects.get(email=request.data.get('email'))
+        send_verification_email(user, request)
+
         return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = OurUser.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, OurUser.DoesNotExist):
+        return Response({'error': 'Invalid user ID.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if default_token_generator.check_token(user, token):
+        if user.is_email_verified:
+            return Response({'message': 'Email already verified.'}, status=status.HTTP_200_OK)
+
+        user.is_email_verified = True
+        user.save()
+        return Response({'message': 'Email successfully verified!'}, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
