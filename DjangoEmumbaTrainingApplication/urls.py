@@ -8,6 +8,7 @@ urlpatterns = [
     path('register/', views.register_user, name='register_user'),
     path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'), # For email verification
     path('login/', views.login_user, name='login_user'),
+    path('google-login/', views.google_login, name='google_login'),
     path('logout/', views.logout_user, name='logout_user'),
     path('get_users/', views.get_users, name='get_users'),
 

@@ -3,6 +3,8 @@ from datetime import date
 
 # I will make my self-made user class inherit from this class, so that it gets all the perks, for example (login, authenticate etc)
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+
 
 # Create your models here.
 
@@ -19,7 +21,11 @@ class OurUser(AbstractUser):
     # The models.EmailField already checks the format at the model/form level.
     email = models.EmailField(unique=True,null=False,blank=False)
 
-    account_date_creation = models.DateField(default=date(2025,1,1))
+    # Why not make the default here to today's date?
+    # The below line will give all the users the date when the server started
+    # account_date_creation = models.DateField(default=timezone.now().date())
+    # This approach is correct
+    account_date_creation = models.DateField(default=timezone.now)
 
     # Users will by default will not be email verified
     # This field will turn to true after users have verified email

@@ -1,0 +1,53 @@
+<!--This is an AI generated FrontEnd, I am not good at frontend--->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login with Google</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <h2>Login with Google</h2>
+
+  <div id="g_id_onload"
+       data-client_id="491997536958-mhn8pth51deeqsfhmvpjle5ij3acimj5.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+
+  <div class="g_id_signin"
+       data-type="standard"
+       data-shape="rectangular"
+       data-theme="outline"
+       data-text="signin_with"
+       data-size="large"
+       data-logo_alignment="left">
+  </div>
+
+  <script>
+    function handleCredentialResponse(response) {
+      const id_token = response.credential;
+      console.log("ID Token received:", id_token);
+
+      // Send the token to your backend
+      fetch('http://localhost:8000/google-login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token: id_token })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Server response:', data);
+        alert("Login successful: " + JSON.stringify(data));
+      })
+      .catch(err => {
+        console.error('Login failed:', err);
+        alert("Login failed: Check console.");
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 # IN this class we will write our APIs
 import csv
+import os
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
@@ -12,6 +13,7 @@ from django.db.models import Q, F
 from django.shortcuts import render, redirect  # This is a auto-included library
 from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import csrf_exempt # To allow other domains to access our api method
+from google.oauth2 import id_token
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -43,9 +45,9 @@ def register_user(request):
     We can no longer just INSERT data to the database, as the passwords will be hashed and stored in it
     BY adding users this way, the password will be hashed by django
 
-    TODO :: Much can be improved here. For example:
+    TODO_DONE :: Much can be improved here. For example:
         1) Same email cannot be used for registration again :: DONE :: Made email unique+NON_NULL+NON_EMPTY in OurUser model
-        2) Verifying the email etc
+        2) Verifying the email etc :: DONE :: Email verification implemented
     """
     # Our Serializer
     serializer = OurUserSerializer(data=request.data)
@@ -110,6 +112,91 @@ def login_user(request):
         return Response({"message": "Login successful!", "username": user.username})
     else:
         return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def google_login(request, google_requests=None):
+    """
+    Function Description: This function will handle the OAuth2 login from google.
+                            1) Check if the google OAuth2 request is valid
+                            2) Get the required info from it
+                            3) If the user is not registered, register him
+                            4) Login the user
+
+    Following Data is provided by the Google token:
+        sub:	        str	    The user's unique Google ID (never changes)
+        email:	        str	    The user's email address
+        email_verified:	bool	Whether the email is verified by Google
+        name:       	str	    The user's full name
+        given_name: 	str	    The user's first name
+        family_name:	str	    The user's last name
+        picture:    	str	    URL of the user's Google profile picture
+        locale:     	str	    User's locale (e.g. "en", "fr", "en-GB")
+        hd:         	str	    Hosted domain (only for GSuite/Google Workspace accounts — optional)
+        iat:        	int	    Issued at time (UNIX timestamp)
+        exp:        	int	    Expiration time (UNIX timestamp)
+        aud:        	str	    Audience — should match your Google Client ID
+        iss:        	str	    Issuer — typically accounts.google.com or https://accounts.google.com
+
+    :param request:
+    :return:
+    """
+    token = request.data.get('token')
+
+    if not token:
+        return Response({'error': 'Missing Google ID token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # This is our main line
+        # This verifies the token and gets user info from Google
+        idinfo = id_token.verify_oauth2_token(
+            token,
+            google_requests.Request(),
+            os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'),  # This is our Google OAuth2 ID
+        )
+
+        # Extract details
+        username = idinfo.get('name')
+        email = idinfo.get('email')
+        password = "We_should_take_username_and_password_from_the_front_end"
+        first_name = idinfo.get('given_name')
+        last_name = idinfo.get('family_name')
+
+        if not username:
+            return Response({'error': 'username not available in token'}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            return Response({'error': 'Email not available in token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find or create the user
+        # get_or_create tries to fetch a user matching a given field (email=email in this case) -
+        # - If such a user exists, it returns that user and created = False
+        # If no such user exists:
+        #     It creates a new one using the defaults dictionary.
+        #     Returns the new user and created = True.
+        user, created = OurUser.objects.get_or_create(
+            email=email,
+            defaults={
+                'username': username,
+                'password': password,
+                'first_name': first_name,
+                'last_name': last_name,
+                'account_date_creation':timezone.now().date(),
+                'is_email_verified':True
+            }
+        )
+
+        # This is the line that logs the user in (for sessions)
+        login(request, user)
+
+        return Response({
+            'message': 'Login successful',
+            'username': user.username,
+            'email': user.email,
+            'created': created,
+        })
+
+    except ValueError:
+        return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
