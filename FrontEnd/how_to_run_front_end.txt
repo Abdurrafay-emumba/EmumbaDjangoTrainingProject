@@ -1,0 +1,9 @@
+1) Do not just open the front end from desktop, the OAuth2 will not work.
+
+2) IN google OAuth2, we specify our frontend url, that from here the OAuth2 request will be generated. So, we need a proper address for our frontend
+
+3) WE need to run the frontend on a server, open the terminal and enter the following commands:
+		3.1) python3 -m http.server 5500
+		3.2) http://localhost:5500/Google_Login_Page.html
+		
+4) Now go to the link (3.2) and login with google.
