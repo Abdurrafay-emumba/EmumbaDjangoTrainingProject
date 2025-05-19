@@ -22,7 +22,8 @@ urlpatterns = [
     path('user/get_average_task_per_day/', views.get_average_task_per_day, name='Report 2'),
     path('user/get_late_task_report/', views.get_late_task_report, name='Report 3'),
     path('user/get_day_on_which_max_number_of_task_completed/', views.get_day_on_which_max_number_of_task_completed, name='Report 4'),
-    path('user/get_number_of_task_opened_every_day/', views.get_number_of_task_opened_every_day, name='Report 5')
+    path('user/get_number_of_task_opened_every_day/', views.get_number_of_task_opened_every_day, name='Report 5'),
+    path('user/get_number_of_task_opened_every_day2/', views.get_number_of_task_opened_every_day2, name='Report 6')
 
 
     # path('about/', views.about, name='about'),

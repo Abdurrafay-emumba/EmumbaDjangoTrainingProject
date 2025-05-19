@@ -623,3 +623,48 @@ def get_number_of_task_opened_every_day(request):
         #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
         #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
         return Response(response_dict)
+
+# Since time of account creation, how many tasks are opened on every day of the week (mon, tue, wed, ....)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_number_of_task_opened_every_day2(request):
+    """
+    Function Definition: It is similar to the previous report, but this one will give us how many task were opened on each day
+    Logic: I would GROUP BY w.r.t creation_date and then add an aggregation function COUNT. This will be done by using -
+    - .values() and .annotate
+
+    Update: THis API is not paginated. And will not be paginated. As it is returning a single dict.
+        Also dict are not paginable objects
+
+    :param request:
+    :param user_id:
+    :return: dict
+    """
+
+    try:
+        user_id = request.user.id
+
+        result = (
+                Task.objects
+                .filter(
+                    user_id=user_id
+                )
+                .values('start_date')               # Both .values() and .annotate() work together to give us a -
+                .annotate(task_count=Count('id'))   # - GROUP BY + aggregation function usage
+            )
+
+        return Response(result)
+
+    # In case of any exception, return the exception
+    except Exception as e:
+        response_dict = dict()
+        response_dict["Exception occurred"] = str(e)
+
+        # @api_view(['GET'])  # Required to make Response work properly
+        # Response is more flexible than JsonReposne
+        # Usage:
+        #   return Response({'message': 'success'})                     # Can return a dict
+        #   return Response([1, 2, 3])                                  # Can return a list
+        #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
+        #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
+        return Response(response_dict)
