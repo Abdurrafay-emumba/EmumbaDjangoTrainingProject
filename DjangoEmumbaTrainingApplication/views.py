@@ -209,7 +209,6 @@ def logout_user(request):
     logout(request)  # Clears the session
     return Response({"message": "Logout successful. User id: " + str_user_id }, status=status.HTTP_200_OK)
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_users(request):
@@ -369,7 +368,7 @@ def SimilarTask(request):
 
 # Reports start from here
 
-# TODO :: Implement a landing page sort of for these download report functions
+# TODO_DONE :: Implement a landing page sort of for these download report functions :: Landing page not required
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_task_status_report(request):
