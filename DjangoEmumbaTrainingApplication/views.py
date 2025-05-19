@@ -14,6 +14,7 @@ from django.shortcuts import render, redirect  # This is a auto-included library
 from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import csrf_exempt # To allow other domains to access our api method
 from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -113,9 +114,10 @@ def login_user(request):
     else:
         return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def google_login(request, google_requests=None):
+def google_login(request):
     """
     Function Description: This function will handle the OAuth2 login from google.
                             1) Check if the google OAuth2 request is valid
@@ -152,7 +154,7 @@ def google_login(request, google_requests=None):
         idinfo = id_token.verify_oauth2_token(
             token,
             google_requests.Request(),
-            os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'),  # This is our Google OAuth2 ID
+            '491997536958-mhn8pth51deeqsfhmvpjle5ij3acimj5.apps.googleusercontent.com',  # This is our Google OAuth2 ID
         )
 
         # Extract details
@@ -195,7 +197,7 @@ def google_login(request, google_requests=None):
             'created': created,
         })
 
-    except ValueError:
+    except Exception as e:
         return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
@@ -264,6 +266,7 @@ def create_task(request):
 # - like in our case
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
+# TODO :: Add more try-catch
 def mark_task_complete(request):
     try:
         task_id = request.data.get('id')
