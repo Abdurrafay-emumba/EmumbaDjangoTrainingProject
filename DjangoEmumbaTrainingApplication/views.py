@@ -110,7 +110,7 @@ def login_user(request):
 
     if user is not None:
         login(request, user)  # This is the line that logs the user in (for sessions)
-        return Response({"message": "Login successful!", "username": user.username})
+        return Response({"message": "Login successful!", "username": user.username}, status=status.HTTP_200_OK)
     else:
         return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
 
