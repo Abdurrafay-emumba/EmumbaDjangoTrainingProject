@@ -156,6 +156,11 @@ class UserEmailVerificationTestCase(APITestCase):
 
 
     def test_verify_email_invalid_token(self):
+        """
+        Function Description: This is a NEGATIVE test case. In this we will try to validate our email using an invalid token -
+        - but valid user id
+        :return:
+        """
         # Valid user id, invalid token
         uid = urlsafe_base64_encode(force_bytes(self.user.pk))
         invalid_token = 'invalid-token'
@@ -167,7 +172,12 @@ class UserEmailVerificationTestCase(APITestCase):
         self.assertIn('Invalid or expired token.', response.json()['error'])
 
     def test_verify_email_invalid_uid(self):
-        # Invalid userId, valid token
+        """
+        Function Description: This is a NEGATIVE test case. In this we will try to validate our email using an valid token -
+        - but invalid user id
+        :return:
+        """
+
         token = default_token_generator.make_token(self.user)
         url = reverse('verify_email', kwargs={'uidb64': 'invaliduid', 'token': token})
 
