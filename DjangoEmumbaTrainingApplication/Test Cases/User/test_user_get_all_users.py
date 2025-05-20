@@ -45,6 +45,28 @@ class GetUsersAPITestCase(APITestCase):
         self.login_url = reverse('login_user')
         self.logout_url = reverse('logout_user')
 
+    def tearDown(self):
+        # This function will run each time after a test case is executed
+        # Clean up: Delete the user after each test
+        for i in range(20):
+            try:
+                # Checking to see if a user is not already registered by this email
+                temp_user = OurUser.objects.get(email=f'test_user{i}@test_example.com')
+                # If a user having our test email exist, then delete it, as we will be registering a user with this email
+                temp_user.delete()
+            except Exception as e:
+                # If there is no user with that email then good
+                pass
+
+            try:
+                # Checking to see if a user is not already registered by this username
+                temp_user = OurUser.objects.get(username=f'test_user{i}')
+                # If a user having our username exist, then delete it, as we will be registering a user with this username
+                temp_user.delete()
+            except Exception as e:
+                # If there is no user with that username then good
+                pass
+
     def test_get_users_authenticated(self):
         """
         Function Description: This is a POSITIVE test case. We will login a user and call the API. It should return us the results
