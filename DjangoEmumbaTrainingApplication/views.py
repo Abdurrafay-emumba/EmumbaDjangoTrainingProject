@@ -38,6 +38,8 @@ from reportlab.pdfgen import canvas
 from django.db.models import Count
 from django.db.models.functions import TruncDate, ExtractWeekDay
 
+# TODO :: IMPORTANT :: Wrap all the APIs in try-catch blocks
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):

@@ -88,13 +88,13 @@ class UserLogOutTestCase(APITestCase):
         }, format='json')
 
         # Ensure login worked
-        self.assertEqual(login_response.status_code, 200)
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
         self.assertIn('_auth_user_id', self.client.session)
 
         # Now call logout
         logout_response = self.client.post(self.logout_url)
 
-        self.assertEqual(logout_response.status_code, 200)
+        self.assertEqual(logout_response.status_code, status.HTTP_200_OK)
         self.assertIn('Logout successful', logout_response.json()['message'])
 
         # Session should be cleared
@@ -109,4 +109,4 @@ class UserLogOutTestCase(APITestCase):
         new_client = self.client_class()
         response = new_client.post(self.logout_url)
 
-        self.assertEqual(response.status_code, 403)  # Because IsAuthenticated is required
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # Because IsAuthenticated is required

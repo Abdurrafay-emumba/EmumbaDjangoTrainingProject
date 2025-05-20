@@ -57,19 +57,7 @@ class OurUserDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OurUser
-        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'account_date_creation']
-
-    def create(self, validated_data):
-        user = OurUser.objects.create_user(
-            id = validated_data['id'],
-            username=validated_data['username'],
-            email=validated_data.get('email', ''),
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            account_date_creation=validated_data.get('account_date_creation')
-        )
-        return user
+        fields = '__all__'
 
 class TaskSerializer(serializers.ModelSerializer):
     """
