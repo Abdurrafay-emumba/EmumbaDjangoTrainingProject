@@ -275,7 +275,7 @@ def mark_task_complete(request):
         # Making sure to get the task of the user with the desired id
         task = Task.objects.get(id=task_id, user_id=request.user)
     except Task.DoesNotExist:
-        return Response({"error": "Task not found"}, status=404)
+        return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
 
     # So, in this line, we are:
     #   Telling the serialzier to update our object 'task'
@@ -283,11 +283,12 @@ def mark_task_complete(request):
     #   partial =True, means we want to update
     serializer = TaskCompletionUpdationSerializer(task, data={}, partial=True)
 
+    # TODO :: Will this serializer always be valid? Since we are passing a task obj to it?
     if serializer.is_valid():
         # This serializer.save() is calling the update function we had overidden in our serializer
         serializer.save()
-        return Response({"message": "Task marked as complete"})
-    return Response(serializer.errors, status=400)
+        return Response({"message": "Task marked as complete"}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # We can use POST here, but that would voilate standards and it may cause confusion and UI incomptatability
 @api_view(['DELETE'])
