@@ -91,7 +91,7 @@ class TaskDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['id', 'title', 'description', 'start_date', 'due_date', 'completion_date', 'completion_status','user_id']
+        fields = '__all__'
 
 class TaskCompletionUpdationSerializer(serializers.ModelSerializer):
     """
