@@ -102,6 +102,12 @@ class LateTaskReportTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_late_task_report_unauthenticated(self):
-        # Not logged in
+        # Log out the user
+        # Logging out, just in case we are not logged in
+        logout_response = self.client.post(self.logout_url)
+        # Session should be cleared
+        self.assertNotIn('_auth_user_id', self.client.session,
+                         msg="There should be no session")
+
         response = self.client.get(self.report_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

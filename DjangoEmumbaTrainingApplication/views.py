@@ -571,7 +571,7 @@ def get_day_on_which_max_number_of_task_completed(request):
         #   return Response([1, 2, 3])                                  # Can return a list
         #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
         #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-        return Response(result)
+        return Response(result, status=status.HTTP_200_OK)
 
     # In case of any exception, return the exception
     except Exception as e:
@@ -585,7 +585,7 @@ def get_day_on_which_max_number_of_task_completed(request):
         #   return Response([1, 2, 3])                                  # Can return a list
         #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
         #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-        return Response(response_dict)
+        return Response(response_dict, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Since time of account creation, how many tasks are opened on every day of the week (mon, tue, wed, ....)
 @api_view(['GET'])
