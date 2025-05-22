@@ -442,7 +442,13 @@ def get_average_task_per_day(request):
         # Number of completed task
         completed_tasks = len(tasks.filter(completion_status=True))
 
-        days_difference = (date.today() - user.account_date_creation).days
+        # For current date, the days_difference will be 0
+        # And it will cause a division by 0 scenario
+        # So, we should count the current day
+        # So, adding +1 to days_difference
+        days_difference = (date.today() - user.account_date_creation).days + 1
+
+
 
         count_of_average_task_completed_per_day = completed_tasks/days_difference
 
@@ -457,7 +463,7 @@ def get_average_task_per_day(request):
         #   return Response([1, 2, 3])                                  # Can return a list
         #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
         #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-        return Response(response_dict)
+        return Response(response_dict, status=status.HTTP_200_OK)
 
     # Incase of any exception, return the exception
     except Exception as e:
@@ -471,7 +477,7 @@ def get_average_task_per_day(request):
         #   return Response([1, 2, 3])                                  # Can return a list
         #   return Response(TaskSerializer(tasks, many=True).data)      # Can return Serialized data (list or dict)
         #   return Response("Hello", content_type='text/plain')         # Can return a str or plain text
-        return Response(response_dict)
+        return Response(response_dict, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
