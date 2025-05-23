@@ -397,6 +397,13 @@ def getAllTask(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def protected_file_download(request, task_id):
+    """
+    Function Description: This function will download the file attached to the task. It will make sure that only the -
+    - user can access their own file. The file will be downloaded as an attachment.
+    :param request:
+    :param task_id:
+    :return:
+    """
     try:
         task = Task.objects.get(id=task_id, user_id=request.user)
         if not task.file_attachment:
@@ -404,6 +411,23 @@ def protected_file_download(request, task_id):
         return FileResponse(task.file_attachment.open(), as_attachment=True)
     except Exception as e:
         return Response({'error':'File not found or access denied'},status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def add_file_to_task(request):
+    try:
+        task_id = request.data.get('task_id')
+        # Making sure to get the task that belongs to the user
+        task = Task.objects.get(id=task_id, user_id=request.user)
+        file = request.FILES.get('file_attachment')
+        if not file:
+            return Response({'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        task.file_attachment = file
+        task.save()
+        return Response({'message': 'File added to task successfully.'}, status=status.HTTP_200_OK)
+    except Task.DoesNotExist:
+        return Response({'error': 'Task not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 # Since for the report functions, we are requiring the user to be logged in
 # So, we no longer require the user_id, instead we will take the user_id of the logged in user
