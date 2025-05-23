@@ -109,3 +109,28 @@ def send_verification_email(user, request):
     # This is django default email sending function. It is sending the email
     send_mail(subject, message, 'noreply@example.com', [user.email])
 
+def send_password_reset_email(user, request):
+    """
+    Function Definition: This function will send the password reset email for us.
+    It will use the credentials that we specified in the settings.py
+
+    This function should be called after the user has requested a password reset
+    :param user:
+    :param request:
+    :return:
+    """
+
+    # This is django default token creation function
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    password_reset_link = request.build_absolute_uri(
+        reverse('verify_forgotten_password_email', kwargs={'uidb64': uid, 'token': token})
+    )
+
+    subject = 'Reset your password'
+    message = f'Hi {user.username},\nPlease reset your password by clicking the link below:\n{password_reset_link}\nIgnore this email if you did not request a password reset.'
+
+    # This is django default email sending function. It is sending the email
+    send_mail(subject, message, 'noreply@example.com', [user.email])
+

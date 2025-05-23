@@ -9,6 +9,8 @@ urlpatterns = [
     path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'), # For email verification
     path('login/', views.login_user, name='login_user'),
     path('google-login/', views.google_login, name='google_login'),
+    path('initiate_reset_forgotten_password/', views.initiate_reset_forgotten_password, name='initiate_reset_forgotten_password'),
+    path('verify_forgotten_password_email/<uidb64>/<token>/', views.verify_forgotten_password_email, name='verify_forgotten_password_email'),
     path('logout/', views.logout_user, name='logout_user'),
     path('get_users/', views.get_users, name='get_users'),
 

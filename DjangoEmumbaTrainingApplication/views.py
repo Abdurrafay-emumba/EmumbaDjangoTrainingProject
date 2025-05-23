@@ -4,6 +4,7 @@ import os
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
 from django.utils import timezone
 from datetime import date
 
@@ -23,7 +24,8 @@ from django.http.response import JsonResponse, HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
-from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate, paginate_queryset, send_verification_email
+from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate, paginate_queryset, send_verification_email, \
+    send_password_reset_email
 # importing our models
 from DjangoEmumbaTrainingApplication.models import OurUser
 from DjangoEmumbaTrainingApplication.models import Task
@@ -201,6 +203,71 @@ def google_login(request):
 
     except Exception as e:
         return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def initiate_reset_forgotten_password(request):
+    """
+    Function Description: This function will reset the password of the user.
+
+    Logic: Since the user has forgotten their password and will not be able to login, we will make this API acessible to -
+    - everyone. The user should provide us with an email and we will send them a link to reset their password.
+    We will follow the same logic as the email verification.
+
+    The below is overall logic of the password reset functionality. Not just this function.
+    1) This function will ONLY send a password reset email to the user
+    2) The user will click on the link in the email (Action performed by the user)
+    3) We will login the user and then redirect them to password reset page? (Action not performed by this function)
+        3.1) Both backend and frontend can handle redirects
+        3.2) But in REST API, the standard is for the backend to just send the redirect url in the standard response
+        3.2) And the frontend will then handle the redirect
+
+    :param request:
+    :return:
+    """
+    try:
+        # The user email should be in the request
+        email = request.data.get('email')
+        # Getting the user based on the email provided
+        user = OurUser.objects.get(email=email)
+        # Sending the user an email to reset their password
+        send_password_reset_email(user, request)
+        # Returning a response that the email was sent
+        return Response({'message': 'Password Reset Email Sent!'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_forgotten_password_email(request, uidb64, token):
+    """
+    Function Definition: This function will verify the password reset token and uidb64.
+            1) After the user has clicked on the link they will be brought to this function.
+            2) The frontend should ask a new password from the user
+            3) If the tokens and uid are valid, then we will save the new password
+
+    :param request:
+    :param uidb64:
+    :param token:
+    :return:
+    """
+    try:
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = OurUser.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, OurUser.DoesNotExist):
+            return Response({'error': 'Invalid user ID.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if default_token_generator.check_token(user, token):
+            # user.login(request)  # Log the user in
+            # return Response({'redirect_url': 'https://example.com/redirect-target/'}, status=status.HTTP_200_OK)
+            user.set_password(request.data.get('new_password'))  # hashes the password
+            user.save()  # saves the user with the new hashed password
+            return Response({'message': 'Password reset successful!'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
