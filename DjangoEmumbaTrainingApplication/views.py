@@ -216,11 +216,7 @@ def initiate_reset_forgotten_password(request):
 
     The below is overall logic of the password reset functionality. Not just this function.
     1) This function will ONLY send a password reset email to the user
-    2) The user will click on the link in the email (Action performed by the user)
-    3) We will login the user and then redirect them to password reset page? (Action not performed by this function)
-        3.1) Both backend and frontend can handle redirects
-        3.2) But in REST API, the standard is for the backend to just send the redirect url in the standard response
-        3.2) And the frontend will then handle the redirect
+    2) The user will click on the link in the email (Action performed by the user) (provide his new password) .
 
     :param request:
     :return:
