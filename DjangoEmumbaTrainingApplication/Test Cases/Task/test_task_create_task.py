@@ -108,7 +108,7 @@ class TestCreateTask(APITestCase):
             "due_date": (timezone.now().date() + timezone.timedelta(days=7)).isoformat()
         }
 
-        response = self.client.post(self.create_task_url, data, format='json')
+        response = self.client.post(self.create_task_url, data, format='multipart')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["message"], "Task created successfully")
@@ -140,7 +140,7 @@ class TestCreateTask(APITestCase):
             "due_date": (timezone.now().date() + timezone.timedelta(days=7)).isoformat()
         }
 
-        response = self.client.post(self.create_task_url, data, format='json')
+        response = self.client.post(self.create_task_url, data, format='multipart')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("title", response.data)
@@ -164,7 +164,7 @@ class TestCreateTask(APITestCase):
             "due_date": (timezone.now().date() + timezone.timedelta(days=7)).isoformat()
         }
 
-        response = self.client.post(self.create_task_url, data, format='json')
+        response = self.client.post(self.create_task_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 

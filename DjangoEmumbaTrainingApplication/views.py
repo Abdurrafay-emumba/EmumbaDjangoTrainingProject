@@ -17,9 +17,9 @@ from django.views.decorators.csrf import csrf_exempt # To allow other domains to
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import JSONParser # to parse the incoming data into data model
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser  # to parse the incoming data into data model
 from django.http.response import JsonResponse, HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
@@ -309,6 +309,7 @@ def get_users(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def create_task(request):
     """
     Function Definition: This function will receive a task data from the user and it will create that task

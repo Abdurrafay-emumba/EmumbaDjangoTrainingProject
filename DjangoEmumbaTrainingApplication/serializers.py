@@ -63,22 +63,35 @@ class TaskSerializer(serializers.ModelSerializer):
     """
     Serializer Info: This serializer will be used in task creation.
     1) It will not take id from user. id will be manages by django
-    2) It will only take title, description and due_date from the user
+    2) It will only take title, description and due_date from the user (file attachment is optional)
     3) It will not take the start_date from the user. start_date will be the same day as today.
     4) It will not take the completion_date from the user. completion_date will be set auto, when the task is marked as complete.
     5) completion_status will be by-default false (mentioned in model). When task is marked completed it will be turned to true.
     6) user_id will be taken from the session id
+    7) A new feature file_attachment is added to the task. It will be optional.
     """
+
+    # Declaring file_attachement as optional
+    file_attachment = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
         model = Task
-        fields = ['title', 'description', 'due_date']
+        fields = ['title', 'description', 'due_date', 'file_attachment']
 
     def create(self, validated_data):
         user = self.context['request'].user
         # Getting today date for the creation of task date
         today = timezone.now().date()
-        return Task.objects.create(user_id=user, start_date = today,**validated_data)
+        # If file_attachment is not present, it returns None instead of raising an error.
+        file = validated_data.pop('file_attachment', None)
+
+        task = Task.objects.create(user_id=user, start_date = today,**validated_data)
+
+        # If file is provided, save it to the task instance
+        if file:
+            task.file_attachment = file
+            task.save()
+        return task
 
 class TaskDetailSerializer(serializers.ModelSerializer):
     """

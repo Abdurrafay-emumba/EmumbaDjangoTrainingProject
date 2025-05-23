@@ -53,7 +53,11 @@ class Task(models.Model):
     # It will auto take the primary key as the foreign key
     user_id = models.ForeignKey(OurUser, on_delete=models.CASCADE)
 
-
+    # This is the file attachment field
+    # It will not contain the file but the url/link to the file
+    # The actual file will be stored in the media folder
+    # We will make sure that only authorized people can get the file
+    file_attachment = models.FileField(upload_to='task_attachments/', null=True, blank=True)
 
 
 
