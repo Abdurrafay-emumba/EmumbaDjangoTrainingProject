@@ -18,6 +18,7 @@ urlpatterns = [
     path('user/tasks/mark_task_complete/', views.mark_task_complete, name='mark_task_complete'),
     path('user/tasks/delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
     path('user/tasks/getAllTask/', views.getAllTask, name='getAllTask'),
+    path('user/tasks/protected_file_download/<int:task_id>/', views.protected_file_download, name='protected_file_download'),
     path('user/tasks/SimilarTask/', views.SimilarTask, name='similar_tasks'),
 
     path('user/get_task_status_report/', views.get_task_status_report, name='Report 1'),

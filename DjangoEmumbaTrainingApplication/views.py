@@ -20,7 +20,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser  # to parse the incoming data into data model
-from django.http.response import JsonResponse, HttpResponse
+from django.http.response import JsonResponse, HttpResponse, FileResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
@@ -394,6 +394,16 @@ def getAllTask(request):
     # Function called for pagination
     return paginate_queryset(tasks, request, TaskDetailSerializer)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def protected_file_download(request, task_id):
+    try:
+        task = Task.objects.get(id=task_id, user_id=request.user)
+        if not task.file_attachment:
+            return Response({'error': 'No file attached to this task'}, status=status.HTTP_404_NOT_FOUND)
+        return FileResponse(task.file_attachment.open(), as_attachment=True)
+    except Exception as e:
+        return Response({'error':'File not found or access denied'},status=status.HTTP_404_NOT_FOUND)
 
 # Since for the report functions, we are requiring the user to be logged in
 # So, we no longer require the user_id, instead we will take the user_id of the logged in user

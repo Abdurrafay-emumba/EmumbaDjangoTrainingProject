@@ -59,6 +59,10 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'Abdurrafay <abdur.rafay@emumba.com>'
 
+# For media files storage
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Manually added, this is required for the authentication and login to work
 REST_FRAMEWORK = {
 
@@ -67,8 +71,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        #'DjangoEmumbaTrainingApplication.authentication.CsrfExemptSessionAuthentication',  # ONLY FOR TESTING PURPOSE WITH POSTMAN, skips CSRF but still uses session login,
-        'rest_framework.authentication.SessionAuthentication',  # for browser logins
+        'DjangoEmumbaTrainingApplication.authentication.CsrfExemptSessionAuthentication',  # ONLY FOR TESTING PURPOSE WITH POSTMAN, skips CSRF but still uses session login,
+        #'rest_framework.authentication.SessionAuthentication',  # for browser logins
         'rest_framework.authentication.BasicAuthentication',  # optional
         'rest_framework.authentication.TokenAuthentication',  # for token-based login
     ],
