@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres
+    container_name: postgres_container
+    environment:
+      POSTGRES_DB: UserTaskDataBase
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - "/home/emumba/Documents/Docker Postgres Container Data:/var/lib/postgresql/data/"
+    networks:
+      - app-network    # Both postgres container and Django container will share the same Docker network so that they may communicate with each other
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django_container
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"  # Expose to host: http://localhost:8000
+    env_file:        # We have specified our env file, now we can even override it's values. So, we will override the postgres database credentails according to our container credentials
+      - .env
+    environment:                # <-- overrides .env value
+      POSTGRES_DB: mydb_from_yml  
+      DB_NAME: UserTaskDataBase
+      DB_USER: postgres
+      DB_PASSWORD: admin
+      DB_HOST: postgres_container   # Now it is no longer localhost but rather we will use the name of the database container, and we can do this because both the Django and database are on the same docker network
+      DB_PORT: 5432
+    depends_on:
+      - db
+    networks:
+      - app-network  # Both postgres container and Django container will share the same Docker network so that they may communicate with each other
+
+# Defining the network
+networks:
+  app-network:
+
+volumes:
+  postgres_data:
+
