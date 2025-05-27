@@ -9,7 +9,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
     volumes:
-      - "/home/emumba/Documents/Docker Postgres Container Data:/var/lib/postgresql/data/"
+      - postgres_data:/var/lib/postgresql/data # Making it more generic # - "/home/emumba/Documents/Docker Postgres Container Data:/var/lib/postgresql/data/"
+      - ./db_backup.dump:/docker-entrypoint-initdb.d/db_backup.dump # Specifying our data dump, to be loaded
+      - ./pg_restore_script.sh:/docker-entrypoint-initdb.d/init.sh  # The init will load our data dump only once, on initialization of the container
     networks:
       - app-network    # Both postgres container and Django container will share the same Docker network so that they may communicate with each other
 
@@ -40,6 +42,9 @@ services:
 networks:
   app-network:
 
+# This is a docker managed volume. Using it and mapping it to our postgres data to make our deployment more generic
+# So, anywhere we may run this docker compose file, this volume will be made, maintained and linked to the container by docker
+# This line in the volumes: - postgres_data:/var/lib/postgresql/data is linking it to the container postgres_container
 volumes:
   postgres_data:
 
