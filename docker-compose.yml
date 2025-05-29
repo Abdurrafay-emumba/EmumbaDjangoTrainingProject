@@ -20,8 +20,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: django_container
-    volumes:
-      - .:/app
+    #volumes:        # Keep these 2 lines commented in production. Why? Because what it is doing is binding our current directory (the one having the source code) to the container. Sp, when the 
+    #  - .:/app      # - Container runs, it will override the code we copied in it (in the Dockerfile) and instead use the source code in our machine/host. So, if we edit the code in the machine, the container will reflect this and restart the django. It is good for development/testing but not recommended for production/deployment.
     ports:
       - "8000:8000"  # Expose to host: http://localhost:8000
     env_file:        # We have specified our env file, now we can even override it's values. So, we will override the postgres database credentails according to our container credentials
@@ -32,11 +32,13 @@ services:
       DB_USER: postgres
       DB_PASSWORD: admin
       DB_HOST: postgres_container   # Now it is no longer localhost but rather we will use the name of the database container, and we can do this because both the Django and database are on the same docker network
-      DB_PORT: 5432
+      DB_PORT: 5432    # Basically our Django container can access this port of the postgres container using the postgres container name because they are both on the same docker network
     depends_on:
       - db
     networks:
       - app-network  # Both postgres container and Django container will share the same Docker network so that they may communicate with each other
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
 
 # Defining the network
 networks:
@@ -47,4 +49,3 @@ networks:
 # This line in the volumes: - postgres_data:/var/lib/postgresql/data is linking it to the container postgres_container
 volumes:
   postgres_data:
-
