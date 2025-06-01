@@ -42,8 +42,9 @@ DEBUG = env('DEBUG')
 #   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 SECRET_KEY = env('SECRET_KEY')
 
-
-ALLOWED_HOSTS = []
+# This change is made so that this project works on aws, we are giving it the aws public ip
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['51.20.181.166']
 
 # Telling our project that use this as the default user
 AUTH_USER_MODEL = 'DjangoEmumbaTrainingApplication.OurUser'
