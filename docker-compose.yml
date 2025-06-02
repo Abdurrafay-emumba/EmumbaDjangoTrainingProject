@@ -15,6 +15,14 @@ services:
     networks:
       - app-network    # Both postgres container and Django container will share the same Docker network so that they may communicate with each other
 
+  redis:
+      image: redis:7
+      container_name: redis_container
+      restart: always
+      networks:
+        - app-network # Redis will also share the same Docker network so that it may communicate with Django container
+
+
   web:
     build:
       context: .
@@ -33,8 +41,11 @@ services:
       DB_PASSWORD: admin
       DB_HOST: postgres_container   # Now it is no longer localhost but rather we will use the name of the database container, and we can do this because both the Django and database are on the same docker network
       DB_PORT: 5432    # Basically our Django container can access this port of the postgres container using the postgres container name because they are both on the same docker network
+      REDIS_HOST: redis_container  # To allow Django to reach Redis
+      REDIS_PORT: 6379             # Default Redis port
     depends_on:
       - db
+      - redis
     networks:
       - app-network  # Both postgres container and Django container will share the same Docker network so that they may communicate with each other
     command: >

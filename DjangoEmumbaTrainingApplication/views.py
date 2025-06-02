@@ -537,7 +537,7 @@ def get_average_task_per_day(request):
     """
     try:
         # Adding a sleep to simulate a long running process, to test caching
-        time.sleep(5);
+        time.sleep(5)
 
         user_id = request.user.id
 
