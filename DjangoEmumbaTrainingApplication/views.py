@@ -1,6 +1,7 @@
 # IN this class we will write our APIs
 import csv
 import os
+import time
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
@@ -8,11 +9,14 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import date
 
+from django.core.cache import cache
 from django.contrib import messages
 from django.db.models import Q, F
 # Importing libraries
 from django.shortcuts import render, redirect  # This is a auto-included library
+from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
+from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt # To allow other domains to access our api method
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -317,6 +321,12 @@ def create_task(request):
     :return: an OK response or a bad response
     """
 
+    # Getting the user id of the logged in person
+    user_id = request.user.id
+
+    # Delete all the cache that should be changed with task creation
+    cache.delete(f"user:{user_id}:avg_tasks_per_day")
+
     # Our Serializer, providing it with more context.
     serializer = TaskSerializer(data=request.data, context={'request': request})
 
@@ -509,6 +519,7 @@ def get_task_status_report(request):
     return response
 
 # Average number of tasks completed per day since creation of account
+@cache_page(60 * 15)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_average_task_per_day(request):
@@ -525,6 +536,9 @@ def get_average_task_per_day(request):
     :return: Not a csv or pdf report, but rather a json/dict
     """
     try:
+        # Adding a sleep to simulate a long running process, to test caching
+        time.sleep(5);
+
         user_id = request.user.id
 
         # Getting the user so that we can have the account creation date
@@ -553,6 +567,11 @@ def get_average_task_per_day(request):
         response_dict = dict()
         response_dict['User ID'] = user_id
         response_dict["Average task completed per day"] = count_of_average_task_completed_per_day
+
+        # We are going to cache the result
+        # This cache should be deleted on task creation
+        cache_key = f"user:{user_id}:avg_tasks_per_day"
+        cache.set(cache_key, response_dict, timeout=60 * 15)
 
         # @api_view(['GET'])  # Required to make Response work properly
         # Response is more flexible than JsonReposne
