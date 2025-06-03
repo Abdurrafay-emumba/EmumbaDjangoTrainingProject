@@ -325,7 +325,9 @@ def create_task(request):
     user_id = request.user.id
 
     # Delete all the cache that should be changed with task creation
-    cache.delete(f"user:{user_id}:avg_tasks_per_day")
+    cache_key = f"user:{user_id}:avg_tasks_per_day"
+    deleted = cache.delete(cache_key)
+    print("Was deletion successful?", deleted)
 
     # Our Serializer, providing it with more context.
     serializer = TaskSerializer(data=request.data, context={'request': request})
@@ -519,7 +521,6 @@ def get_task_status_report(request):
     return response
 
 # Average number of tasks completed per day since creation of account
-@cache_page(60 * 15)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_average_task_per_day(request):
