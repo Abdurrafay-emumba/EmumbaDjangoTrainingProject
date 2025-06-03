@@ -28,6 +28,7 @@ from django.http.response import JsonResponse, HttpResponse, FileResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response # More flexible than JsonResponse
 
+from DjangoEmumbaTrainingApplication.cache_functions import *
 from DjangoEmumbaTrainingApplication.middleware import Custom_Authenticate, paginate_queryset, send_verification_email, \
     send_password_reset_email
 # importing our models
@@ -324,11 +325,6 @@ def create_task(request):
     # Getting the user id of the logged in person
     user_id = request.user.id
 
-    # Delete all the cache that should be changed with task creation
-    cache_key = f"user:{user_id}:avg_tasks_per_day"
-    deleted = cache.delete(cache_key)
-    print("Was deletion successful?", deleted)
-
     # Our Serializer, providing it with more context.
     serializer = TaskSerializer(data=request.data, context={'request': request})
 
@@ -338,6 +334,14 @@ def create_task(request):
         serializer.save()
         return Response({'message': 'Task created successfully'}, status=status.HTTP_201_CREATED)
 
+    # Delete all the cache that should be changed with task creation
+    invalidate_cache_get_task_status_report(user_id)
+    invalidate_cache_get_average_task_per_day(user_id)
+    invalidate_cache_get_late_task_report(user_id)
+    invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
+    invalidate_cache_get_number_of_task_opened_every_day(user_id)
+    invalidate_cache_get_number_of_task_opened_every_day2(user_id)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # We could have used PUT here, but PATCH is more resource light, and should be used when updating some values -
@@ -346,6 +350,10 @@ def create_task(request):
 @permission_classes([IsAuthenticated])
 # TODO :: Add more try-catch
 def mark_task_complete(request):
+
+    # Getting the user id of the logged in person
+    user_id = request.user.id
+
     try:
         task_id = request.data.get('id')
         # Making sure to get the task of the user with the desired id
@@ -364,6 +372,15 @@ def mark_task_complete(request):
         # This serializer.save() is calling the update function we had overidden in our serializer
         serializer.save()
         return Response({"message": "Task marked as complete"}, status=status.HTTP_200_OK)
+
+    # Delete all the cache that should be changed with task completion
+    invalidate_cache_get_task_status_report(user_id)
+    invalidate_cache_get_average_task_per_day(user_id)
+    invalidate_cache_get_late_task_report(user_id)
+    invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
+    invalidate_cache_get_number_of_task_opened_every_day(user_id)
+    invalidate_cache_get_number_of_task_opened_every_day2(user_id)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # We can use POST here, but that would voilate standards and it may cause confusion and UI incomptatability
@@ -378,10 +395,22 @@ def delete_task(request, task_id):
     :return:
     """
     try:
+        # Getting the user id of the logged in person
+        user_id = request.user.id
+
         # To specify the task and user
         task = Task.objects.get(id=task_id, user_id=request.user)
         # This is enough to delete the object
         task.delete()
+
+        # Delete all the cache that should be changed with task deletion
+        invalidate_cache_get_task_status_report(user_id)
+        invalidate_cache_get_average_task_per_day(user_id)
+        invalidate_cache_get_late_task_report(user_id)
+        invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
+        invalidate_cache_get_number_of_task_opened_every_day(user_id)
+        invalidate_cache_get_number_of_task_opened_every_day2(user_id)
+
         return Response({"message": "Task deleted successfully."}, status=status.HTTP_200_OK)
     except Task.DoesNotExist:
         return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -518,6 +547,12 @@ def get_task_status_report(request):
     writer.writerow(['Total tasks', 'Completed Task', 'Incompleted Task'])
     writer.writerow([total_task, completed_tasks, incomplete_tasks])
 
+    # Cacheing the result
+    # This cache should be deleted on task creation
+    # This cache should be deleted on task completion
+    # This cache should be deleted on task deletion
+    add_cache_get_task_status_report(user_id, response)
+
     return response
 
 # Average number of tasks completed per day since creation of account
@@ -571,8 +606,9 @@ def get_average_task_per_day(request):
 
         # We are going to cache the result
         # This cache should be deleted on task creation
-        cache_key = f"user:{user_id}:avg_tasks_per_day"
-        cache.set(cache_key, response_dict, timeout=60 * 15)
+        # This cache should be deleted on task completion
+        # This cache should be deleted on task deletion
+        add_cache_get_average_task_per_day(user_id, response_dict)
 
         # @api_view(['GET'])  # Required to make Response work properly
         # Response is more flexible than JsonReposne
@@ -633,6 +669,13 @@ def get_late_task_report(request):
 
     p.showPage()
     p.save()
+
+    # Cacheing the result
+    # This cache should be deleted on task creation
+    # This cache should be deleted on task completion
+    # This cache should be deleted on task deletion
+    add_cache_get_late_task_report(user_id, response)
+
     return response
 
 # Since time of account creation, on what date, maximum number of tasks were completed in a single day
@@ -681,6 +724,12 @@ def get_day_on_which_max_number_of_task_completed(request):
             .order_by('-task_count')                    # This task_count is the one we just calculated, the '-' means descending order. Without it, it would be ascending order
             .first()                                    # Since, we ordered it. By getting the first we get the date with the max tasks completed
         )
+
+        # Cache this response
+        # This cache should be deleted on task creation
+        # This cache should be deleted on task completion
+        # This cache should be deleted on task deletion
+        add_cache_get_day_on_which_max_number_of_task_completed(user_id, result)
 
         # @api_view(['GET'])  # Required to make Response work properly
         # Response is more flexible than JsonReposne
@@ -735,6 +784,12 @@ def get_number_of_task_opened_every_day(request):
                 .annotate(task_count=Count('id'))
             )
 
+        # Cache this response
+        # This cache should be deleted on task creation
+        # This cache should be deleted on task completion
+        # This cache should be deleted on task deletion
+        add_cache_get_number_of_task_opened_every_day(user_id, result)
+
         return Response(result)
 
     # In case of any exception, return the exception
@@ -779,6 +834,12 @@ def get_number_of_task_opened_every_day2(request):
                 .values('start_date')               # Both .values() and .annotate() work together to give us a -
                 .annotate(task_count=Count('id'))   # - GROUP BY + aggregation function usage
             )
+
+        # Cache this response
+        # This cache should be deleted on task creation
+        # This cache should be deleted on task completion
+        # This cache should be deleted on task deletion
+        add_cache_get_number_of_task_opened_every_day2(user_id, result)
 
         return Response(result)
 
