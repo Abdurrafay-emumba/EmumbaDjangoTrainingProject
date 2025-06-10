@@ -26,6 +26,15 @@ def add_cache_get_task_status_report(user_id, data, timeout=60 * 15):
     cache_key = create_cache_key_get_task_status_report(user_id)
     return cache.set(cache_key, data, timeout=timeout)
 
+def get_cache_get_task_status_report(user_id):
+    """
+    Function Purpose: This function will get the cache for the task status report.
+    :param user_id: The user id for which the cache is to be validated
+    :return: Will return the cached data if it exists, otherwise None.
+    """
+    cache_key = create_cache_key_get_task_status_report(user_id)
+    return cache.get(cache_key)
+
 def invalidate_cache_get_task_status_report(user_id):
     """
     Function Purpose: This function will invalidate the cache for the task status report.
@@ -54,6 +63,15 @@ def add_cache_get_average_task_per_day(user_id, data, timeout=60 * 15):
     """
     cache_key = create_cache_key_get_average_task_per_day(user_id)
     return cache.set(cache_key, data, timeout=timeout)
+
+def get_cache_get_average_task_per_day(user_id):
+    """
+    Function Purpose: This function will get the cache for the average task per day.
+    :param user_id: The user id for which the cache is to be validated
+    :return: Will return the cached data if it exists, otherwise None.
+    """
+    cache_key = create_cache_key_get_average_task_per_day(user_id)
+    return cache.get(cache_key)
 
 def invalidate_cache_get_average_task_per_day(user_id):
     """
@@ -84,6 +102,15 @@ def add_cache_get_late_task_report(user_id, data, timeout=60 * 15):
     cache_key = create_cache_key_get_late_task_report(user_id)
     return cache.set(cache_key, data, timeout=timeout)
 
+def get_cache_get_late_task_report(user_id):
+    """
+    Function Purpose: This function will get the cache for the late task report.
+    :param user_id: The user id for which the cache is to be validated
+    :return: Will return the cached data if it exists, otherwise None.
+    """
+    cache_key = create_cache_key_get_late_task_report(user_id)
+    return cache.get(cache_key)
+
 def invalidate_cache_get_late_task_report(user_id):
     """
     Function Purpose: This function will invalidate the cache for the late task report.
@@ -112,6 +139,15 @@ def add_cache_get_day_on_which_max_number_of_task_completed(user_id, data, timeo
     """
     cache_key = create_cache_key_get_day_on_which_max_number_of_task_completed(user_id)
     return cache.set(cache_key, data, timeout=timeout)
+
+def get_cache_get_day_on_which_max_number_of_task_completed(user_id):
+    """
+    Function Purpose: This function will get the cache for the day on which max number of task completed.
+    :param user_id: The user id for which the cache is to be validated
+    :return: Will return the cached data if it exists, otherwise None.
+    """
+    cache_key = create_cache_key_get_day_on_which_max_number_of_task_completed(user_id)
+    return cache.get(cache_key)
 
 def invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id):
     """
@@ -142,6 +178,15 @@ def add_cache_get_number_of_task_opened_every_day(user_id, data, timeout=60 * 15
     cache_key = create_cache_key_get_number_of_task_opened_every_day(user_id)
     return cache.set(cache_key, data, timeout=timeout)
 
+def get_cache_get_number_of_task_opened_every_day(user_id):
+    """
+    Function Purpose: This function will get the cache for the number of task opened every day.
+    :param user_id: The user id for which the cache is to be validated
+    :return: Will return the cached data if it exists, otherwise None.
+    """
+    cache_key = create_cache_key_get_number_of_task_opened_every_day(user_id)
+    return cache.get(cache_key)
+
 def invalidate_cache_get_number_of_task_opened_every_day(user_id):
     """
     Function Purpose: This function will invalidate the cache for the number of task opened every day.
@@ -170,6 +215,15 @@ def add_cache_get_number_of_task_opened_every_day2(user_id, data, timeout=60 * 1
     """
     cache_key = create_cache_key_get_number_of_task_opened_every_day2(user_id)
     return cache.set(cache_key, data, timeout=timeout)
+
+def get_cache_get_number_of_task_opened_every_day2(user_id):
+    """
+    Function Purpose: This function will get the cache for the number of task opened every day2.
+    :param user_id: The user id for which the cache is to be validated
+    :return: Will return the cached data if it exists, otherwise None.
+    """
+    cache_key = create_cache_key_get_number_of_task_opened_every_day2(user_id)
+    return cache.get(cache_key)
 
 def invalidate_cache_get_number_of_task_opened_every_day2(user_id):
     """

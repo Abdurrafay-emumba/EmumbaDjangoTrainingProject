@@ -331,16 +331,16 @@ def create_task(request):
     # If the received data seems valid, then ok add the task
     # Otherwise don't
     if serializer.is_valid():
+        # Delete all the cache that should be changed with task creation
+        invalidate_cache_get_task_status_report(user_id)
+        invalidate_cache_get_average_task_per_day(user_id)
+        invalidate_cache_get_late_task_report(user_id)
+        invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
+        invalidate_cache_get_number_of_task_opened_every_day(user_id)
+        invalidate_cache_get_number_of_task_opened_every_day2(user_id)
+
         serializer.save()
         return Response({'message': 'Task created successfully'}, status=status.HTTP_201_CREATED)
-
-    # Delete all the cache that should be changed with task creation
-    invalidate_cache_get_task_status_report(user_id)
-    invalidate_cache_get_average_task_per_day(user_id)
-    invalidate_cache_get_late_task_report(user_id)
-    invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
-    invalidate_cache_get_number_of_task_opened_every_day(user_id)
-    invalidate_cache_get_number_of_task_opened_every_day2(user_id)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -369,17 +369,17 @@ def mark_task_complete(request):
 
     # TODO :: Will this serializer always be valid? Since we are passing a task obj to it?
     if serializer.is_valid():
+        # Delete all the cache that should be changed with task completion
+        invalidate_cache_get_task_status_report(user_id)
+        invalidate_cache_get_average_task_per_day(user_id)
+        invalidate_cache_get_late_task_report(user_id)
+        invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
+        invalidate_cache_get_number_of_task_opened_every_day(user_id)
+        invalidate_cache_get_number_of_task_opened_every_day2(user_id)
         # This serializer.save() is calling the update function we had overidden in our serializer
         serializer.save()
         return Response({"message": "Task marked as complete"}, status=status.HTTP_200_OK)
 
-    # Delete all the cache that should be changed with task completion
-    invalidate_cache_get_task_status_report(user_id)
-    invalidate_cache_get_average_task_per_day(user_id)
-    invalidate_cache_get_late_task_report(user_id)
-    invalidate_cache_get_day_on_which_max_number_of_task_completed(user_id)
-    invalidate_cache_get_number_of_task_opened_every_day(user_id)
-    invalidate_cache_get_number_of_task_opened_every_day2(user_id)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -527,6 +527,12 @@ def get_task_status_report(request):
     """
     user_id = request.user.id
 
+    # Getting the cached response, if it exists
+    cached_response = get_cache_get_task_status_report(user_id)
+    if cached_response is not None:
+        return cached_response
+
+
     tasks = Task.objects.filter(user_id=user_id)
 
     total_task = len(tasks)
@@ -572,10 +578,16 @@ def get_average_task_per_day(request):
     :return: Not a csv or pdf report, but rather a json/dict
     """
     try:
-        # Adding a sleep to simulate a long running process, to test caching
-        time.sleep(5)
 
         user_id = request.user.id
+
+        # Getting the cached response, if it exists
+        cached_response = get_cache_get_average_task_per_day(user_id)
+        if cached_response is not None:
+            return Response(cached_response, status=status.HTTP_200_OK)
+
+        # Adding a sleep to simulate a long running process, to test caching
+        time.sleep(5)
 
         # Getting the user so that we can have the account creation date
         # The reason the below mentioned line did not work is because filter returns a queryset of zero or more objects -
@@ -647,6 +659,11 @@ def get_late_task_report(request):
     user_id = request.user.id
     today = timezone.now().date()
 
+    # Getting the cached response, if it exists
+    cached_response = get_cache_get_late_task_report(user_id)
+    if cached_response is not None:
+        return cached_response
+
     tasks = Task.objects.filter(user_id=user_id)
 
     # Q is used to combine multiple conditions using logical operations (| for OR, & for AND).
@@ -697,6 +714,12 @@ def get_day_on_which_max_number_of_task_completed(request):
 
     try:
         user_id = request.user.id
+
+        # Getting the cached response, if it exists
+        cached_response = get_cache_get_day_on_which_max_number_of_task_completed(user_id)
+        if cached_response is not None:
+            return Response(cached_response, status=status.HTTP_200_OK)
+
 
         # Some explanation
         #
@@ -774,6 +797,12 @@ def get_number_of_task_opened_every_day(request):
     try:
         user_id = request.user.id
 
+        # Getting the cached response, if it exists
+        cached_response = get_cache_get_number_of_task_opened_every_day(user_id)
+        if cached_response is not None:
+            return Response(cached_response)
+
+
         result = (
                 Task.objects
                 .filter(
@@ -825,6 +854,11 @@ def get_number_of_task_opened_every_day2(request):
 
     try:
         user_id = request.user.id
+
+        # Getting the cached response, if it exists
+        cached_response = get_cache_get_number_of_task_opened_every_day2(user_id)
+        if cached_response is not None:
+            return Response(cached_response)
 
         result = (
                 Task.objects
