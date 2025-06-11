@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'DjangoEmumbaTrainingApplication.apps.DjangoemumbatrainingapplicationConfig',
+    'django_celery_beat',
 ]
 
 # This will allow all to access our API, not recommended in Development environment
