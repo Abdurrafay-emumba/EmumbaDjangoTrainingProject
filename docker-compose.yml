@@ -22,6 +22,21 @@ services:
       networks:
         - app-network # Redis will also share the same Docker network so that it may communicate with Django container
 
+  celery:
+    build: .
+    command: celery -A DjangoEmumbaTrainingProject worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file: # We have specified our env file, now we can even override it's values. So, we will override the postgres database credentails according to our container credentials
+      - .env
+    environment: # <-- overrides .env value
+      REDIS_HOST: redis_container  # To allow Django to reach Redis
+      REDIS_PORT: 6379             # Default Redis port
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
 
   web:
     build:

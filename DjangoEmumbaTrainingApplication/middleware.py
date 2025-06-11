@@ -12,6 +12,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from DjangoEmumbaTrainingApplication.models import OurUser
+from DjangoEmumbaTrainingApplication.tasks import async_send_mail
 
 
 def Custom_Authenticate(userNameOrEmail, password):
@@ -107,7 +108,9 @@ def send_verification_email(user, request):
     message = f'Hi {user.username},\nPlease verify your email by clicking the link below:\n{verification_link}'
 
     # This is django default email sending function. It is sending the email
-    send_mail(subject, message, 'noreply@example.com', [user.email])
+    # send_mail(subject, message, 'noreply@example.com', [user.email])
+    # Using celery task to send email asynchronously
+    async_send_mail.delay(subject, message, user.email)
 
 def send_password_reset_email(user, request):
     """
@@ -132,5 +135,6 @@ def send_password_reset_email(user, request):
     message = f'Hi {user.username},\nPlease reset your password by clicking the link below:\n{password_reset_link}\nIgnore this email if you did not request a password reset.'
 
     # This is django default email sending function. It is sending the email
-    send_mail(subject, message, 'noreply@example.com', [user.email])
-
+    # send_mail(subject, message, 'noreply@example.com', [user.email])
+    # Using celery task to send email asynchronously
+    async_send_mail.delay(subject, message, user.email)
