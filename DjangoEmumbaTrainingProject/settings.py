@@ -76,6 +76,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 
+    # This is for authentication, it will use the following classes in order
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'DjangoEmumbaTrainingApplication.authentication.CsrfExemptSessionAuthentication',  # ONLY FOR TESTING PURPOSE WITH POSTMAN, skips CSRF but still uses session login,
         #'rest_framework.authentication.SessionAuthentication',  # for browser logins
@@ -85,7 +86,18 @@ REST_FRAMEWORK = {
 
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated', # This makes every API endpoint require authentication by default, unless you explicitly override it with @permission_classes([AllowAny]).
-    ]
+    ],
+
+    # This is for throttling, it will limit the number of requests a user can make in a given time period
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/hour',
+        'anon': '10/hour',
+    }
 }
 
 # Application definition
